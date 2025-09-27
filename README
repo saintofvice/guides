@@ -1,7 +1,7 @@
 These are my git scripts
 
 # Create keys
-ssh-keygen -t ed25519 -C user@mail.com
+ssh-keygen -t ed25519 -C USER@MAIL.COM
 # Just press enter to save to default location
 
 touch ~/.ssh/config
@@ -23,12 +23,12 @@ Some scripts I use
 
 # Create.
 ginit(){
-	git config --global user.email "user@mail.com" ;
-	git config --global user.name "user" ;
+	git config --global user.email "USER@MAIL.COM" ;
+	git config --global user.name "USER" ;
 	git init ;
 	git add . ;
 	git commit -m "Initial commit" ;
-	git remote add origin git@github.com:user/"$(basename $(pwd))" ;
+	git remote add origin git@github.com:USER/"$(basename $(pwd))" ;
 }
 # Commit.
 gommit(){
@@ -43,7 +43,7 @@ ghub(){
 	else
 		GIT_BRANCH="$1"
 	fi
-	git remote set-url origin git@github.com:user/"$(basename $(pwd))" ;
+	git remote set-url origin git@github.com:USER/"$(basename $(pwd))" ;
 	eval "$(ssh-agent -s)" ;
 	ssh-add ~/.ssh/id_ed25519 ;
 	git push -u origin "$GIT_BRANCH" ;
