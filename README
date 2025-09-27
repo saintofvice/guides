@@ -1,3 +1,9 @@
+# General cheat sheet
+curl cht.sh/COMMAND
+# for example (for git)
+curl cht.sh/git
+
+
 These are my git scripts
 
 # Create keys
