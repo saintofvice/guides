@@ -1,0 +1,50 @@
+These are my git scripts
+
+# Create keys
+ssh-keygen -t ed25519 -C user@mail.com
+# Just press enter to save to default location
+
+touch ~/.ssh/config
+# add the next lines
+Host *
+  AddKeysToAgent yes
+  IdentityFile ~/.ssh/id_ed25519
+
+# run
+ssh-add ~/.ssh/id_ed25519
+
+# Go to: Github -> Setting -> SSH and GPG keys -> SSH keys -> New SSH key
+# Add any title you want
+# Add key by copying output from
+cat ~/.ssh/id_ed25519
+
+
+Some scripts I use
+
+# Create.
+ginit(){
+	git config --global user.email "user@mail.com" ;
+	git config --global user.name "user" ;
+	git init ;
+	git add . ;
+	git commit -m "Initial commit" ;
+	git remote add origin git@github.com:user/"$(basename $(pwd))" ;
+}
+# Commit.
+gommit(){
+	git add . ;
+	git commit -m "$1" ;
+}
+# Push to Github.
+ghub(){
+	# If you changed just a branch, you need to push that branch (i.e. "main").
+	if test -z "$1" ; then
+		GIT_BRANCH="master"
+	else
+		GIT_BRANCH="$1"
+	fi
+	git remote set-url origin git@github.com:user/"$(basename $(pwd))" ;
+	eval "$(ssh-agent -s)" ;
+	ssh-add ~/.ssh/id_ed25519 ;
+	git push -u origin "$GIT_BRANCH" ;
+}
