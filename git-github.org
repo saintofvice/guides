@@ -1,4 +1,4 @@
-### GIT SETUP ###
+* GIT SETUP
 ###
 # Create keys
 ssh-keygen -t ed25519 -C USER@MAIL.COM
@@ -13,16 +13,14 @@ Host *
 # run
 ssh-add ~/.ssh/id_ed25519
 
-
-### GITHUB SETUP ###
+* GITHUB SETUP
 ###
 # Go to: Github -> Setting -> SSH and GPG keys -> SSH keys -> New SSH key
 # Add any title you want
 # Add key by copying output from
 cat ~/.ssh/id_ed25519
 
-
-### GIT/GITHUB SCRIPTS ###
+* GIT/GITHUB SCRIPTS
 ### Put these in .bashrc or similar
 ###
 # Create.
