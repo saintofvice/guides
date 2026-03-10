@@ -1,0 +1,168 @@
+# INSTALLATION
+## SSH DURING INSTALLATION (OPTIONAL)
+# change livecd root password
+passwd root
+
+# allow login as root (already enabled on livecd)
+#echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config
+
+# check sshd
+rc-service sshd status
+
+# start sshd
+rc-service sshd start
+
+# identify network interface
+ifconfig
+
+# dhcp into the interface
+dhcpcd <INTERFACE>
+
+## base
+ls -R /usr/share/kbd/keymaps/ | less
+# non-english only
+loadkeys <KEYMAP>
+cfdisk /dev/sda
+# UEFI: should be label "gpt", "/dev/sda1" "EFI partition".
+# BIOS: should be label "dos", "/dev/sda1" and "/dev/sda3 "Linux partition", sda1 should also be "Bootable".
+# "/dev/sda2" should be "SWAP"
+mkfs.fat -F 32 /dev/sda1
+mkswap /dev/sda2
+mkfs.ext4 /dev/sda3
+mount --mkdir /dev/sda3 /mnt/gentoo
+mount --mkdir /dev/sda1 /mnt/gentoo/boot
+swapon /dev/sda2
+date +%Y%m%d -s "20081128"
+hwclock --systohc
+cd /mnt/gentoo
+#links https://www.gentoo.org/downloads/amd64/
+links https://www.gentoo.org/downloads/mirrors/
+tar xpvf stage3-amd64-openrc-XXXXX.tar.xz --xattrs-include="*.*" --numeric-owner
+vi /mnt/gentoo/etc/portage/make.conf
+# "MAKEOPTS=-j<NPROC>", means to input the value returned by "nproc", otherwise dont include MAKEOPTS as it defaults to nproc
+MAKEOPTS="-j4"
+USE="-systemd -pulseaudio -kde -gnome -avahi -zeroconf -bluetooth -wifi -samba -udisks -pam -consolekit -policykit -dbus -cups -scrobbler -accessibility -cloudprint -chromecast"
+cp --dereference /etc/resolv.conf /mnt/gentoo/etc/
+mount --types proc /proc /mnt/gentoo/proc
+mount --rbind /sys /mnt/gentoo/sys
+mount --make-rslave /mnt/gentoo/sys
+mount --rbind /dev /mnt/gentoo/dev
+mount --make-rslave /mnt/gentoo/dev
+mount --bind /run /mnt/gentoo/run
+mount --make-slave /mnt/gentoo/run
+chroot /mnt/gentoo /bin/bash
+source /etc/profile
+export PS1="(chroot) $PS1"
+mount /dev/sda1 /boot
+emerge-webrsync
+emerge --sync --quiet
+emerge --ask --verbose --update --deep --changed-use @world
+emerge -q app-editors/vim
+ls -R /usr/share/zoneinfo | less
+ln -sf /usr/share/zoneinfo/<REGION>/<COUNTRY>/<CITY> /etc/localtime
+#vim /etc/locale.gen # "en_US.UTF-8 UTF-8"
+echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
+locale-gen
+eselect locale list
+eselect locale set <NUMBER>
+env-update && source /etc/profile && export PS1="(chroot) $PS1"
+echo 'sys-kernel/linux-firmware @BINARY-REDISTRIBUTABLE' | tee -a /etc/portage/package.license
+#emerge --ask sys-kernel/linux-firmware
+emerge -q sys-kernel/linux-firmware
+emerge --ask sys-firmware/sof-firmware
+### DEFAULT KERNEL
+echo 'sys-kernel/installkernel dracut grub' >> /etc/portage/package.use/installkernel
+emerge -q sys-kernel/installkernel
+emerge -q sys-kernel/gentoo-kernel-bin
+### DEFAULT KERNEL end
+vim /etc/fstab
+/dev/sda1    /boot    vfat    defaults    0 2
+/dev/sda2    none    swap    sw    0 0
+/dev/sda3    /    ext4    noatime    0 1
+# or
+UUID=<uuid> <PATH_TO_DIRECTORY> <FILESYSTEM> <OPTIONS> <NUMBER> <NUMBER>
+vim /etc/conf.d/hostname
+# Change "hostname=<NAME>" with desired name.
+vim /etc/hosts
+127.0.0.1 <NAME>
+emerge -q net-misc/dhcpcd
+emerge -q --noreplace net-misc/netifrc
+# look the name of the interface
+ifconfig
+# add that interface
+vim /etc/conf.d/net
+config_<INTERFACE>="dhcp"
+# i.e.
+config_enp0s3="dhcp"
+cd /etc/init.d
+ln -s net.lo net.<INTERFACE>
+rc-update add net.<INTERFACE> default
+passwd
+# look in /etc/portage/make.conf for "GRUB_PLATFORMS" examples
+# NOT necessary on BIOS
+echo 'GRUB_PLATFORMS="<PLATFORM>"' >> /etc/portage/make.conf
+# if on EFI
+echo 'GRUB_PLATFORMS="efi-64"' >> /etc/portage/make.conf
+# emerge "efibootmgr" if on EFI
+emerge -q sys-boot/grub efibootmgr
+# if on EFI also
+mount -t efivarfs efivarfs /sys/firmware/efi/efivars
+
+# method A
+mkdir -p /boot/grub
+grub-mkconfig > /boot/grub/grub.cfg
+# method A.1 (BIOS)
+grub-install --target=i386-pc /dev/sda
+# method A.2 (EFI)
+grub-install --target=x86_64-efi --efi-directory=/boot/ --bootloader-id=GRUB
+# method B (EFI)
+make localmodconfig
+make -j $(nproc) all modules_install install
+mv /boot/vmlinuz /boot/linux.efi
+efibootmgr --create --disk /dev/sda --part 1 --label "EFISTUB" --loader /linux.efi -u 'root=/dev/sda3 rw rootfstype=ext4 net.ifnames=0 vga=ask'
+
+exit
+umount -R /mnt/gentoo
+shutdown -h now
+
+## X
+touch /etc/portage/package.use/xorg
+echo 'sys-auth/pambase elogind' | tee -a /etc/portage/package.use/xorg
+echo 'media-libs/libglvnd X' | tee -a /etc/portage/package.use/xorg
+echo 'net-wireless/wpa_supplicant dbus' | tee -a /etc/portage/package.use/xorg
+emerge --ask -q xorg-server x11-apps/xinit x11-apps/xrandr x11-drivers/xf86-video-vesa elogind dev-vcs/git sys-apps/dbus
+
+# COMMANDS
+# show profiles (with an asterisk on the selected)
+eselect profile list | less
+
+# change selected profile
+eselect profile set <NUMBER>
+
+# update
+emerge --sync --quiet
+
+# upgrade
+emerge --ask --verbose --update --deep --changed-use @world
+
+# install
+emerge -q <CATEGORY>/<PROGRAM>
+
+# uninstall
+emerge --deselect <PROGRAM>
+emerge --depclean
+
+# see what flags are enabled
+portageq envvar USE | xargs -n 1
+
+# see what flags are default
+USE_ORDER="defaults:pkginternal:repo" emerge --info | grep USE
+
+# show news
+eselect news read | less
+
+# show available locales
+eselect locale list
+# selected default locale
+eselect locale set <NUMBER>
+
