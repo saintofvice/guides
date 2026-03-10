@@ -1,88 +1,88 @@
 # CONFIGURATION
 ## INITIALIZATION (ONLY NON-LINUX -BSDS, MACOS, WINDOWS-)
-# CREATE VM ON OS THAT DONT SUPPORT LINUX CONTAINERS NATIVELY (BSDS, MACOS, WINDOWS)
-PODMAN MACHINE INIT
-# PULLS A FEDORA IMAGE
-# ALLOCATES DISK SPACE
-# REGISTERS THE MACHINE IN "~/.LOCAL/SHARE/CONTAINERS/PODMAN/MACHINE/"
+# create VM on OS that dont support Linux containers natively (BSDs, MacOS, Windows)
+podman machine init
+# pulls a Fedora image
+# allocates disk space
+# registers the machine in "~/.local/share/containers/podman/machine/"
 
-# RESOURCES CAN BE SET:
-PODMAN MACHINE INIT --CPUS 2 --MEMORY 2048 --DISK-SIZE 20
-# 2 CPUS
+# resources can be set:
+podman machine init --cpus 2 --memory 2048 --disk-size 20
+# 2 CPUs
 # 2 GB RAM
-# 20 GB DISK
+# 20 GB disk
 
-# START THE VM (NOT YET THE CONTAINER)
-PODMAN MACHINE START
+# start the VM (NOT yet the container)
+podman machine start
 
-# VERIFY
-PODMAN INFO
+# verify
+podman info
 
-## REPOS
-# ADD UNQUALIFIED REGISTRIES (WONT PULL OTHERWISE)
-ECHO 'UNQUALIFIED-SEARCH-REGISTRIES = ["DOCKER.IO"]' >>  /ETC/CONTAINERS/REGISTRIES.CONF.D/10-UNQUALIFIED-SEARCH-REGISTRIES.CONF
+## repos
+# add unqualified registries (wont pull otherwise)
+echo 'unqualified-search-registries = ["docker.io"]' >>  /etc/containers/registries.conf.d/10-unqualified-search-registries.conf
 
 ## PERMISSIONS
-# ONLY ROOT CAN RUN PODS BY DEFAULT
+# only root can run pods by default
 
-# CHECK PERMISSIONS
-$ SYSCTL KERNEL.UNPRIVILEGED_USERNS_CLONE
-# ROOTLESS IS ENABLED IF "1"
+# check permissions
+$ sysctl kernel.unprivileged_userns_clone
+# Rootless is enabled if "1"
 
-# ENABLE ROOTLESS FOR USER <USER>
-USERMOD --ADD-SUBUIDS 100000-165535 --ADD-SUBGIDS 100000-165535 <USER>
+# Enable rootless for user <USER>
+usermod --add-subuids 100000-165535 --add-subgids 100000-165535 <USER>
 
-# AS USER
-$ PODMAN SYSTEM MIGRATE
+# as user
+$ podman system migrate
 
 # COMMANDS
 ## GENERAL
-# SEARCH CONTAINER
-PODMAN SEARCH <CONTAINER>
+# search container
+podman search <CONTAINER>
 
-# PULL AN IMAGE
-PODMAN PULL <CONTAINER>
+# pull an image
+podman pull <CONTAINER>
 
-# REMOVE
-PODMAN RM
+# remove
+podman rm
 
-# LIST DOWNLOADED
-PODMAN IMAGES
+# list downloaded
+podman images
 
-# LIST RUNNING
-PODMAN PS
+# list running
+podman ps
 
-# LOGS
-PODMAN LOGS -L
+# logs
+podman logs -l
 
-# PIDS
-PODMAN TOP -L
+# PIDs
+podman top -l
 
-# CHECK OVERLAY
-PODMAN INFO | GREP -I OVERLAY
+# check overlay
+podman info | grep -i overlay
 
 ## RUNNING
-PODMAN RUN --RM --OS=<OS> <CONTAINER> <COMMAND>
-# "--RM" REMOVES AFTER RUN
-# "--OS=<OS>" DEFINES AN OS TO RUN UNDER
-# "<CONTAINER>" IS THE NAME OF CONTAINER TO BE PULLED
-# "<COMMAND>" THE COMMAND TO RUN INSIDE THE CONTAINER
-# I.E.
-PODMAN RUN --RM --OS=LINUX ALPINE CAT /ETC/OS-RELEASE | HEAD 1
+podman run --rm --os=<OS> <CONTAINER> <COMMAND>
+# "--rm" removes after run
+# "--os=<OS>" defines an OS to run under
+# "<CONTAINER>" is the name of container to be pulled
+# "<COMMAND>" the command to run inside the container
+# i.e.
+podman run --rm --os=linux alpine cat /etc/os-release | head 1
 
-# "-IT": INTERACTIVE AND SET A TTY (TO GET A SHELL)
-PODMAN RUN -IT --RM --OS=<OS> <CONTAINER> <PATH_TO_SHELL>
-# I.E.
-PODMAN RUN -IT --RM --OS=LINUX ALPINE /BIN/SH
+# "-it": interactive and set a tty (to get a shell)
+podman run -it --rm --os=<OS> <CONTAINER> <PATH_TO_SHELL>
+# i.e.
+podman run -it --rm --os=linux alpine /bin/sh
 
 ## SYSTEMD INTEGRATION
-# GENERATE A SYSTEMD UNIT (ALL AS USER, NOT ROOT)
-# PREVIOUSLY "MKDIR -P ~/.CONFIG/SYSTEMD/USER/"
-PODMAN GENERATE SYSTEM --NEW --NAME <CONTAINER> > ~/.CONFIG/SYSTEMD/USER/<CONTAINER>.SERVICE
-CHMOD 644 ~/.CONFIG/SYSTEMD/USER/<CONTAINER>.SERVICE
-# RESTART SYSTEMD
-SYSTEMCTL --USER DAEMON-RELOAD
-# ENABLE ON BOOT
-SYSTEMCTL --USER ENABLE <CONTAINER>.SERVICE
-# CHECK STATUS
-SYSTEMCTL --USER STATUS  <CONTAINER>.SERVICE
+# generate a systemd unit (all as user, not root)
+# previously "mkdir -p ~/.config/systemd/user/"
+podman generate system --new --name <CONTAINER> > ~/.config/systemd/user/<CONTAINER>.service
+chmod 644 ~/.config/systemd/user/<CONTAINER>.service
+# restart systemd
+systemctl --user daemon-reload
+# enable on boot
+systemctl --user enable <CONTAINER>.service
+# check status
+systemctl --user status  <CONTAINER>.service
